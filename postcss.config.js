@@ -1,6 +1,1 @@
-module.exports = {
-  plugins: {
-    tailwindcss: {},
-    autoprefixer: {},
-  },
-}
+SEE_LOCAL_POSTCSS_CONFIG
