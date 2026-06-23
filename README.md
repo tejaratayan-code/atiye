@@ -10,12 +10,32 @@
 - افزودن کارمند جدید با فرم تعاملی + جدول استخدام‌های اخیر (ذخیره در حافظه مرورگر)
 - طراحی responsive و آماده برای Tauri (تبدیل به .exe دسکتاپ)
 
-**ساختار پروژه:**
-- `index.html` → پنل کامل (همه چیز در یک فایل برای شروع سریع)
+**ساختار پروژه (Tailwind CSS v3):**
+- `index.html` → پنل کامل (RTL + داشبورد + منو)
+- `src/input.css` → ورودی Tailwind
+- `tailwind.config.js` + `postcss.config.js`
+- `dist/output.css` → خروجی بیلد (بعد از `npm run build`)
 
-**نحوه اجرا (فعلی):**
-1. فایل `index.html` را در مرورگر باز کنید.
-2. برای توسعه محلی: از Live Server یا هر وب سرور ساده استفاده کنید.
+**دستورات نصب و راه‌اندازی Tailwind v3:**
+
+```bash
+# کلون کردن ریپو
+git clone https://github.com/tejaratayan-code/atiye.git
+cd atiye
+
+# نصب وابستگی‌ها (Tailwind v3 + PostCSS + Autoprefixer)
+npm install
+
+# بیلد CSS (یک بار)
+npm run build:css
+
+# توسعه با watch (توصیه می‌شود)
+npm run dev
+```
+
+سپس `index.html` را باز کنید (یا از `npm run preview` استفاده کنید).
+
+**نکته:** فایل `dist/output.css` بعد از اولین بیلد ساخته می‌شود. همه کلاس‌های Tailwind v3 از طریق این فایل لود می‌شوند (به جای CDN).
 
 **مراحل بعدی (طبق دستور شما):**
 - تکمیل بخش‌های منو (کارکنان کامل، جذب نیرو، حضور و غیاب، حقوق و دستمزد، گزارش‌ها)

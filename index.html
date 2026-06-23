@@ -4,108 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>آتیه • پنل مدیریت منابع انسانی</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./dist/output.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
+        /* Additional custom styles (Tailwind v3 handles most via input.css) */
         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;display=swap');
-        
-        :root {
-            --accent: #6366f1;
-        }
         
         body {
             font-family: 'Vazirmatn', 'Inter', system-ui, -apple-system, sans-serif;
         }
         
-        .menu-item {
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        :root {
+            --accent: #6366f1;
         }
-        
-        .menu-item.active {
-            background-color: #27251f;
-            color: white;
-            border-radius: 16px;
-        }
-        
-        .menu-item:not(.active):hover {
-            background-color: #27251f;
-            color: #e4e4e7;
-        }
-        
-        .stat-card {
-            transition: transform 0.2s cubic-bezier(0.4, 0.0, 0.2, 1), 
-                       box-shadow 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-        }
-        
-        .modern-table {
-            border-radius: 20px;
-            overflow: hidden;
-        }
-        
-        .section-header {
-            font-size: 1.75rem;
-            line-height: 1.1;
-            font-weight: 700;
-            letter-spacing: -0.025em;
-        }
-        
-        .glass {
-            background: rgba(39, 37, 31, 0.6);
-            backdrop-filter: blur(20px);
-        }
-        
-        .custom-scroll {
-            scrollbar-width: thin;
-            scrollbar-color: #3f3e3a #27251f;
-        }
-        
-        .nav-active {
-            position: relative;
-        }
-        
-        .nav-active::after {
-            content: '';
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 5px;
-            height: 5px;
-            background: #6366f1;
-            border-radius: 50%;
-        }
-        
-        .metric-value {
-            font-variant-numeric: tabular-nums;
-        }
-        
-        .modal {
-            animation: modalPop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        
-        @keyframes modalPop {
-            from {
-                opacity: 0;
-                transform: scale(0.95) translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
-        }
-        
-        .toast {
-            animation: toastSlide 0.3s ease forwards;
-        }
-        
-        .dashboard-bg {
-            background: linear-gradient(145deg, #18181b 0%, #27251f 100%);
-        }
+        /* Old custom CSS kept for compatibility - will be cleaned in next steps if needed */
     </style>
 </head>
 <body class="bg-zinc-950 text-zinc-200">
@@ -529,7 +441,7 @@
         }
 
         const persianWeekdays = ['یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه', 'شنبه'];
-        const persianMonths = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
+        const persianMonths = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسُند'];
 
         function updateDateTime() {
             const now = new Date();
