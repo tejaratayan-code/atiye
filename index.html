@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>آتیه • پنل مدیریت منابع انسانی</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;display=swap');
+        
+        :root {
+            --accent: #6366f1;
+        }
+        
+        body {
+            font-family: 'Vazirmatn', 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        
+        .menu-item {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .menu-item.active {
+            background-color: #27251f;
+            color: white;
+            border-radius: 16px;
+        }
+        
+        .menu-item:not(.active):hover {
+            background-color: #27251f;
+            color: #e4e4e7;
+        }
+        
+        .stat-card {
+            transition: transform 0.2s cubic-bezier(0.4, 0.0, 0.2, 1), 
+                       box-shadow 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+        
+        .modern-table {
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        
+        .section-header {
+            font-size: 1.75rem;
+            line-height: 1.1;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+        }
+        
+        .glass {
+            background: rgba(39, 37, 31, 0.6);
+            backdrop-filter: blur(20px);
+        }
+        
+        .custom-scroll {
+            scrollbar-width: thin;
+            scrollbar-color: #3f3e3a #27251f;
+        }
+        
+        .nav-active {
+            position: relative;
+        }
+        
+        .nav-active::after {
+            content: '';
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 5px;
+            height: 5px;
+            background: #6366f1;
+            border-radius: 50%;
+        }
+        
+        .metric-value {
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .modal {
+            animation: modalPop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        @keyframes modalPop {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        
+        .toast {
+            animation: toastSlide 0.3s ease forwards;
+        }
+        
+        .dashboard-bg {
+            background: linear-gradient(145deg, #18181b 0%, #27251f 100%);
+        }
+    </style>
+</head>
+<body class="bg-zinc-950 text-zinc-200">
+    <!-- Top Navigation Bar -->
+    <nav class="fixed top-0 left-0 right-0 z-50 h-16 bg-zinc-900 border-b border-zinc-800 flex items-center px-6">
+        <div class="flex items-center justify-between w-full max-w-screen-2xl mx-auto">
+            
+            <!-- Logo -->
+            <div class="flex items-center gap-x-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center shadow-inner">
+                    <i class="fa-solid fa-briefcase text-white text-2xl"></i>
+                </div>
+                <div>
+                    <span class="font-extrabold text-3xl tracking-tighter">آتیه</span>
+                    <span class="text-[10px] text-zinc-500 font-medium tracking-[3px] block -mt-1.5">HR PLATFORM</span>
+                </div>
+            </div>
+
+            <!-- Global Search -->
+            <div class="flex-1 max-w-md mx-8">
+                <div class="relative group">
+                    <i class="fa-solid fa-search absolute right-4 top-1/2 -mt-2 text-zinc-400 group-focus-within:text-indigo-400 transition-colors"></i>
+                    <input 
+                        id="global-search"
+                        type="text" 
+                        placeholder="جستجو در کارکنان، درخواست‌ها و ..." 
+                        class="w-full bg-zinc-900 border border-zinc-700 focus:border-indigo-500/70 transition-all text-sm rounded-3xl py-[11px] pr-11 pl-5 outline-none placeholder:text-zinc-500"
+                        onkeyup="filterRecentHires()">
+                </div>
+            </div>
+
+            <!-- Right Section: Date/Time + Actions + Profile -->
+            <div class="flex items-center gap-x-3">
+                
+                <!-- Live Shamsi Date & Time -->
+                <div id="datetime-pill" 
+                     class="hidden md:flex items-center gap-x-3 bg-zinc-900 border border-zinc-700 rounded-3xl px-5 h-11 text-sm font-medium shadow-inner">
+                    <div class="flex items-center gap-x-2 text-zinc-300">
+                        <i class="fa-solid fa-calendar-alt text-indigo-400"></i>
+                        <span id="shamsi-date" class="font-semibold tabular-nums"></span>
+                    </div>
+                    <div class="w-px h-4 bg-zinc-700"></div>
+                    <div class="flex items-center gap-x-1.5 text-emerald-400 font-mono tabular-nums text-base tracking-tighter">
+                        <i class="fa-solid fa-clock text-xs"></i>
+                        <span id="live-time"></span>
+                    </div>
+                </div>
+
+                <!-- Notifications -->
+                <button onclick="showToast('اعلان‌ها', '۵ درخواست جدید استخدام در انتظار بررسی هستند.')" 
+                        class="relative flex items-center justify-center w-11 h-11 hover:bg-zinc-800 active:bg-zinc-700 transition-colors rounded-2xl border border-zinc-700">
+                    <i class="fa-solid fa-bell text-xl text-zinc-300"></i>
+                    <span class="absolute top-2.5 left-2.5 flex h-4 w-4">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-4 w-4 bg-rose-500 text-[9px] font-bold items-center justify-center text-white">۵</span>
+                    </span>
+                </button>
+
+                <!-- Profile -->
+                <div class="flex items-center gap-x-3 pr-2 pl-4 border-r border-zinc-700">
+                    <div class="text-right leading-none">
+                        <div class="font-semibold text-sm">علی رضایی</div>
+                        <div class="text-[10px] text-emerald-400 -mt-px">مدیر منابع انسانی</div>
+                    </div>
+                    <img src="https://i.pravatar.cc/40?img=68" 
+                         class="w-9 h-9 rounded-2xl ring-2 ring-offset-2 ring-offset-zinc-950 ring-zinc-700 object-cover" 
+                         alt="پروفایل مدیر">
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Layout -->
+    <div class="flex h-screen pt-16">
+        
+        <!-- Main Dashboard Content -->
+        <main class="flex-1 overflow-auto p-8 custom-scroll">
+            
+            <!-- Dashboard Header -->
+            <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-y-4 mb-8">
+                <div>
+                    <h1 class="section-header">داشبورد</h1>
+                    <p class="text-zinc-400 mt-1 text-[15px">خلاصه وضعیت منابع انسانی و استخدام • <span class="text-emerald-400">به‌روز</span></p>
+                </div>
+                
+                <div class="flex items-center gap-x-3">
+                    <button onclick="showAddEmployeeModal()"
+                            class="flex items-center justify-center gap-x-2.5 bg-white text-zinc-900 hover:bg-zinc-100 active:bg-zinc-200 transition-all font-semibold text-sm h-11 px-7 rounded-3xl shadow-lg shadow-zinc-950/50">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span>افزودن کارمند جدید</span>
+                    </button>
+                    
+                    <button onclick="showToast('خروجی گزارش', 'گزارش داشبورد با موفقیت دانلود شد (دمو)')"
+                            class="flex items-center justify-center gap-x-2 h-11 px-5 text-sm font-medium border border-zinc-700 hover:bg-zinc-900 transition-colors rounded-3xl">
+                        <i class="fa-solid fa-download"></i>
+                        <span class="hidden md:inline">خروجی گزارش</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-8">
+                
+                <!-- Stat 1: Total Employees -->
+                <div class="stat-card bg-zinc-900 border border-zinc-800 rounded-3xl p-5">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="flex items-center gap-x-2 text-emerald-400">
+                                <i class="fa-solid fa-users text-lg"></i>
+                                <span class="text-xs tracking-widest font-medium">کل کارکنان</span>
+                            </div>
+                            <div class="metric-value text-5xl font-extrabold tracking-tighter mt-3 text-white">248</div>
+                        </div>
+                    </div>
+                    <div class="mt-5 flex items-center text-xs">
+                        <span class="px-3 py-1 rounded-2xl bg-emerald-500/10 text-emerald-400 font-medium">+۱۲ نفر</span>
+                        <span class="text-zinc-500 mr-2">در ماه جاری</span>
+                    </div>
+                </div>
+
+                <!-- Stat 2: Open Positions -->
+                <div class="stat-card bg-zinc-900 border border-zinc-800 rounded-3xl p-5">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="flex items-center gap-x-2 text-amber-400">
+                                <i class="fa-solid fa-briefcase text-lg"></i>
+                                <span class="text-xs tracking-widest font-medium">موقعیت‌های باز</span>
+                            </div>
+                            <div class="metric-value text-5xl font-extrabold tracking-tighter mt-3 text-white">۷</div>
+                        </div>
+                    </div>
+                    <div class="mt-5 text-xs text-amber-400 font-medium">۳ موقعیت فوری • ۴ موقعیت عادی</div>
+                </div>
+
+                <!-- Stat 3: New Applications -->
+                <div class="stat-card bg-zinc-900 border border-zinc-800 rounded-3xl p-5">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="flex items-center gap-x-2 text-sky-400">
+                                <i class="fa-solid fa-file-invoice text-lg"></i>
+                                <span class="text-xs tracking-widest font-medium">درخواست‌های جدید</span>
+                            </div>
+                            <div class="metric-value text-5xl font-extrabold tracking-tighter mt-3 text-white">۳۴</div>
+                        </div>
+                    </div>
+                    <div class="mt-5 flex items-center text-xs">
+                        <span class="text-sky-400">۸ درخواست در هفته اخیر</span>
+                    </div>
+                </div>
+
+                <!-- Stat 4: Pending Leaves -->
+                <div class="stat-card bg-zinc-900 border border-zinc-800 rounded-3xl p-5">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="flex items-center gap-x-2 text-rose-400">
+                                <i class="fa-solid fa-calendar-check text-lg"></i>
+                                <span class="text-xs tracking-widest font-medium">مرخصی در انتظار</span>
+                            </div>
+                            <div class="metric-value text-5xl font-extrabold tracking-tighter mt-3 text-white">۵</div>
+                        </div>
+                    </div>
+                    <div class="mt-5 text-xs text-rose-400">نیاز به بررسی فوری</div>
+                </div>
+            </div>
+
+            <!-- Content Grid: Recent Hires + Quick Actions -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                
+                <!-- Recent Hires Table -->
+                <div class="lg:col-span-8 bg-zinc-900 border border-zinc-800 rounded-3xl p-6">
+                    <div class="flex items-center justify-between mb-5">
+                        <div>
+                            <span class="font-semibold text-lg">استخدام‌های اخیر</span>
+                            <span class="text-xs text-zinc-500 mr-2">(۱۰ مورد آخر)</span>
+                        </div>
+                        <button onclick="showToast('مشاهده همه', 'لیست کامل کارکنان در بخش بعدی منو قابل دسترسی خواهد بود.')"
+                                class="text-xs flex items-center gap-x-1 text-indigo-400 hover:text-indigo-300 transition-colors font-medium">
+                            <span>مشاهده همه</span>
+                            <i class="fa-solid fa-arrow-left text-xs"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full modern-table text-sm">
+                            <thead>
+                                <tr class="bg-zinc-800/60 text-xs text-zinc-400">
+                                    <th class="py-4 pr-6 text-right font-medium">نام و نام خانوادگی</th>
+                                    <th class="py-4 text-right font-medium">کد ملی</th>
+                                    <th class="py-4 text-right font-medium">سمت</th>
+                                    <th class="py-4 text-right font-medium">تاریخ شروع (شمسی)</th>
+                                    <th class="py-4 pl-6 text-center font-medium">وضعیت</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-hires-tbody" class="divide-y divide-zinc-800 text-zinc-300">
+                                <!-- Populated dynamically by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Quick Actions Sidebar -->
+                <div class="lg:col-span-4 bg-zinc-900 border border-zinc-800 rounded-3xl p-6 flex flex-col">
+                    <div class="font-semibold mb-4 flex items-center gap-x-2">
+                        <i class="fa-solid fa-bolt text-amber-400"></i>
+                        <span>اقدامات سریع</span>
+                    </div>
+                    
+                    <div class="space-y-[6px] flex-1">
+                        <button onclick="quickActionRecruit()"
+                                class="w-full group flex items-center justify-between text-sm bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 transition-all px-5 h-[46px] rounded-2xl">
+                            <div class="flex items-center gap-x-3">
+                                <i class="fa-solid fa-user-tie text-indigo-400 w-4"></i>
+                                <span>ثبت درخواست استخدام جدید</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-left text-xs text-zinc-400 group-hover:text-white transition-colors"></i>
+                        </button>
+                        
+                        <button onclick="showAddEmployeeModal()"
+                                class="w-full group flex items-center justify-between text-sm bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 transition-all px-5 h-[46px] rounded-2xl">
+                            <div class="flex items-center gap-x-3">
+                                <i class="fa-solid fa-user-plus text-emerald-400 w-4"></i>
+                                <span>افزودن مستقیم کارمند</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-left text-xs text-zinc-400 group-hover:text-white transition-colors"></i>
+                        </button>
+                        
+                        <button onclick="showToast('گزارش‌ها', 'بخش گزارش‌های تحلیلی در حال توسعه است.')"
+                                class="w-full group flex items-center justify-between text-sm bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 transition-all px-5 h-[46px] rounded-2xl">
+                            <div class="flex items-center gap-x-3">
+                                <i class="fa-solid fa-chart-line text-sky-400 w-4"></i>
+                                <span>مشاهده گزارش‌های تحلیلی</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-left text-xs text-zinc-400 group-hover:text-white transition-colors"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="text-[10px] text-center text-zinc-500 pt-4 mt-auto border-t border-zinc-800">
+                        آخرین همگام‌سازی: <span class="font-mono">همین لحظه</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer note -->
+            <div class="mt-8 text-center">
+                <p class="text-[10px] text-zinc-500">این پنل به صورت مرحله‌ای در حال تکمیل است. همه تقویم‌ها شمسی • آماده تبدیل به اپلیکیشن دسکتاپ با Tauri</p>
+            </div>
+        </main>
+
+        <!-- Right Sidebar Menu -->
+        <aside class="w-72 flex-shrink-0 bg-zinc-900 border-l border-zinc-800 overflow-y-auto custom-scroll hidden lg:block">
+            <div class="p-6">
+                <div class="px-3 mb-2">
+                    <span class="uppercase tracking-[3px] text-xs text-zinc-500 font-medium">منو اصلی</span>
+                </div>
+                
+                <div class="space-y-1" id="sidebar-menu">
+                    <!-- Dashboard -->
+                    <a href="#" onclick="activateMenuItem(this, 'dashboard'); return false;" 
+                       class="menu-item active nav-active flex items-center gap-x-3 px-4 h-11 text-sm font-medium rounded-2xl bg-zinc-800 text-white">
+                        <i class="fa-solid fa-chart-line w-5 text-center text-indigo-400"></i>
+                        <span>داشبورد</span>
+                    </a>
+                    
+                    <!-- Employees -->
+                    <a href="#" onclick="activateMenuItem(this, 'employees'); return false;" 
+                       class="menu-item flex items-center gap-x-3 px-4 h-11 text-sm font-medium rounded-2xl text-zinc-400 hover:text-zinc-200">
+                        <i class="fa-solid fa-users w-5 text-center"></i>
+                        <span>کارکنان</span>
+                    </a>
+                    
+                    <!-- Recruitment -->
+                    <a href="#" onclick="activateMenuItem(this, 'recruitment'); return false;" 
+                       class="menu-item flex items-center gap-x-3 px-4 h-11 text-sm font-medium rounded-2xl text-zinc-400 hover:text-zinc-200">
+                        <i class="fa-solid fa-user-plus w-5 text-center"></i>
+                        <span>جذب و استخدام</span>
+                    </a>
+                    
+                    <!-- Attendance -->
+                    <a href="#" onclick="activateMenuItem(this, 'attendance'); return false;" 
+                       class="menu-item flex items-center gap-x-3 px-4 h-11 text-sm font-medium rounded-2xl text-zinc-400 hover:text-zinc-200">
+                        <i class="fa-solid fa-calendar-check w-5 text-center"></i>
+                        <span>حضور و غیاب</span>
+                    </a>
+                    
+                    <!-- Payroll -->
+                    <a href="#" onclick="activateMenuItem(this, 'payroll'); return false;" 
+                       class="menu-item flex items-center gap-x-3 px-4 h-11 text-sm font-medium rounded-2xl text-zinc-400 hover:text-zinc-200">
+                        <i class="fa-solid fa-wallet w-5 text-center"></i>
+                        <span>حقوق و دستمزد</span>
+                    </a>
+                    
+                    <!-- Reports -->
+                    <a href="#" onclick="activateMenuItem(this, 'reports'); return false;" 
+                       class="menu-item flex items-center gap-x-3 px-4 h-11 text-sm font-medium rounded-2xl text-zinc-400 hover:text-zinc-200">
+                        <i class="fa-solid fa-file-lines w-5 text-center"></i>
+                        <span>گزارش‌ها و تحلیل</span>
+                    </a>
+                    
+                    <div class="my-3 border-t border-zinc-800"></div>
+                    
+                    <!-- Settings -->
+                    <a href="#" onclick="activateMenuItem(this, 'settings'); return false;" 
+                       class="menu-item flex items-center gap-x-3 px-4 h-11 text-sm font-medium rounded-2xl text-zinc-400 hover:text-zinc-200">
+                        <i class="fa-solid fa-cog w-5 text-center"></i>
+                        <span>تنظیمات سیستم</span>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="px-6 py-4 mt-auto border-t border-zinc-800 text-xs text-zinc-500">
+                <div class="flex items-center justify-between text-[10px]">
+                    <span>نسخه ۰۱.۰</span>
+                    <span class="font-mono text-emerald-500/70">Tauri Ready</span>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Add New Employee Modal -->
+    <div id="add-employee-modal" onclick="if (event.target.id === 'add-employee-modal') closeAddModal()" 
+         class="hidden fixed inset-0 bg-black/80 z-[200] flex items-center justify-center p-4">
+        <div onclick="event.stopImmediatePropagation()" 
+             class="modal bg-zinc-900 border border-zinc-700 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden">
+            
+            <!-- Modal Header -->
+            <div class="px-7 pt-6 pb-4 flex items-center justify-between border-b border-zinc-700">
+                <div>
+                    <span class="font-bold text-xl">افزودن کارمند جدید</span>
+                    <p class="text-xs text-zinc-400">اطلاعات اولیه را وارد کنید</p>
+                </div>
+                <button onclick="closeAddModal()" class="text-zinc-400 hover:text-white w-9 h-9 flex items-center justify-center text-2xl leading-none">×</button>
+            </div>
+            
+            <!-- Form -->
+            <div class="p-7 space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs text-zinc-400 mb-1.5">نام و نام خانوادگی</label>
+                        <input id="emp-name" type="text" value="سارا محمدی" 
+                               class="w-full bg-zinc-800 border border-zinc-700 focus:border-indigo-500 rounded-2xl px-4 h-11 text-sm outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-zinc-400 mb-1.5">کد ملی</label>
+                        <input id="emp-national-id" type="text" value="۰۰۸۷۵۴۳۲۱۹" 
+                               class="w-full bg-zinc-800 border border-zinc-700 focus:border-indigo-500 rounded-2xl px-4 h-11 text-sm outline-none font-mono">
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs text-zinc-400 mb-1.5">سمت شغلی</label>
+                        <input id="emp-position" type="text" value="کارشناس منابع انسانی" 
+                               class="w-full bg-zinc-800 border border-zinc-700 focus:border-indigo-500 rounded-2xl px-4 h-11 text-sm outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-zinc-400 mb-1.5">واحد سازمانی</label>
+                        <select id="emp-department" class="w-full bg-zinc-800 border border-zinc-700 focus:border-indigo-500 rounded-2xl px-4 h-11 text-sm outline-none">
+                            <option>منابع انسانی</option>
+                            <option>مالی و حسابداری</option>
+                            <option>فناوری اطلاعات</option>
+                            <option>بازاریابی و فروش</option>
+                            <option>عملیات</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-xs text-zinc-400 mb-1.5">تاریخ شروع به کار (شمسی)</label>
+                    <div class="flex gap-3">
+                        <input id="emp-start-date" type="text" value="۱۴۰۴/۱۰/۱۵" placeholder="مثال: ۱۴۰۴/۱۰/۱۵"
+                               class="flex-1 bg-zinc-800 border border-zinc-700 focus:border-indigo-500 rounded-2xl px-4 h-11 text-sm outline-none font-mono">
+                        <div class="text-[10px] text-amber-400 self-center whitespace-nowrap">شمسی الزامی</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Modal Footer -->
+            <div class="px-7 py-5 bg-zinc-950 flex items-center justify-end gap-x-3 border-t border-zinc-700">
+                <button onclick="closeAddModal()" 
+                        class="px-6 h-10 text-sm font-medium text-zinc-300 hover:text-white transition-colors">انصراف</button>
+                <button onclick="addNewEmployee()" 
+                        class="px-8 h-10 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 transition-all text-white text-sm font-semibold rounded-2xl flex items-center gap-x-2">
+                    <i class="fa-solid fa-check"></i>
+                    <span>ثبت کارمند</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-6 left-6 z-[300] flex flex-col gap-2"></div>
+
+    <script>
+        // Tailwind Config
+        function initTailwind() {
+            document.documentElement.style.setProperty('--accent', '#6366f1');
+        }
+
+        // ========== JALALI (SHAMSI) CONVERTER ==========
+        function toJalali(gy, gm, gd) {
+            var g_d_m = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+            var gy2 = (gm > 2) ? (gy + 1) : gy;
+            var days = 355666 + (365 * gy) + ~~((gy2 + 3) / 4) - ~~((gy2 + 99) / 100) + ~~((gy2 + 399) / 400) + gd + g_d_m[gm];
+            var jy = -1595 + (33 * ~~(days / 12053));
+            days %= 12053;
+            jy += 4 * ~~(days / 1461);
+            days %= 1461;
+            if (days > 365) {
+                jy += ~~((days - 1) / 365);
+                days = (days - 1) % 365;
+            }
+            var jm, jd;
+            if (days < 186) {
+                jm = 1 + ~~(days / 31);
+                jd = 1 + (days % 31);
+            } else {
+                jm = 7 + ~~((days - 186) / 30);
+                jd = 1 + ((days - 186) % 30);
+            }
+            return [jy, jm, jd];
+        }
+
+        const persianWeekdays = ['یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه', 'شنبه'];
+        const persianMonths = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
+
+        function updateDateTime() {
+            const now = new Date();
+            
+            // Jalali date
+            const jalali = toJalali(now.getFullYear(), now.getMonth() + 1, now.getDate());
+            const weekday = persianWeekdays[now.getDay()];
+            const dateStr = `${weekday} ${jalali[2]} ${persianMonths[jalali[1] - 1]} ${jalali[0]}`;
+            
+            // Live time (HH:MM:SS)
+            const timeStr = now.toLocaleTimeString('fa-IR', { 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit',
+                hour12: false 
+            });
+            
+            // Update DOM
+            const dateEl = document.getElementById('shamsi-date');
+            const timeEl = document.getElementById('live-time');
+            
+            if (dateEl) dateEl.textContent = dateStr;
+            if (timeEl) timeEl.textContent = timeStr;
+        }
+
+        // ========== MENU HANDLING ==========
+        let currentSection = 'dashboard';
+
+        function activateMenuItem(element, section) {
+            // Remove active from all
+            document.querySelectorAll('#sidebar-menu .menu-item').forEach(el => {
+                el.classList.remove('active', 'nav-active', 'bg-zinc-800', 'text-white');
+                el.classList.add('text-zinc-400');
+            });
+            
+            // Activate current
+            element.classList.add('active', 'nav-active', 'bg-zinc-800', 'text-white');
+            element.classList.remove('text-zinc-400');
+            
+            currentSection = section;
+            
+            if (section === 'dashboard') {
+                // Already on dashboard
+                document.querySelector('main').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+                // Show coming soon toast for other sections
+                const sectionNames = {
+                    'employees': 'کارکنان',
+                    'recruitment': 'جذب و استخدام',
+                    'attendance': 'حضور و غیاب',
+                    'payroll': 'حقوق و دستمزد',
+                    'reports': 'گزارش‌ها و تحلیل',
+                    'settings': 'تنظیمات سیستم'
+                };
+                
+                showToast(
+                    sectionNames[section] || 'بخش', 
+                    'این بخش در مرحله بعدی تکمیل می‌شود. لطفاً دستور بعدی را بدهید تا ادامه دهیم.'
+                );
+                
+                // Revert to dashboard after 1.8s (visual feedback)
+                setTimeout(() => {
+                    if (currentSection === section) {
+                        const dashboardLink = document.querySelector('#sidebar-menu .menu-item');
+                        if (dashboardLink) {
+                            activateMenuItem(dashboardLink, 'dashboard');
+                        }
+                    }
+                }, 1800);
+            }
+        }
+
+        // ========== TOAST NOTIFICATIONS ==========
+        function showToast(title, message) {
+            const container = document.getElementById('toast-container');
+            
+            const toast = document.createElement('div');
+            toast.className = `toast max-w-xs w-full bg-zinc-900 border border-zinc-700 shadow-xl rounded-2xl p-4 flex gap-3`;
+            
+            toast.innerHTML = `
+                <div class="flex-1 min-w-0">
+                    <div class="font-semibold text-sm text-white">${title}</div>
+                    <div class="text-xs text-zinc-400 mt-0.5 leading-snug">${message}</div>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-zinc-400 hover:text-white self-start text-xl leading-none mt-px">×</button>
+            </div>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Auto remove after 5.5 seconds
+            setTimeout(() => {
+                if (toast && toast.parentNode) toast.parentNode.removeChild(toast);
+            }, 5500);
+        }
+
+        // ========== RECENT HIRES DATA (localStorage persisted) ==========
+        let recentHires = [];
+
+        function loadRecentHires() {
+            const saved = localStorage.getItem('atiye_recent_hires');
+            if (saved) {
+                recentHires = JSON.parse(saved);
+            } else {
+                // Initial demo data
+                recentHires = [
+                    { id: 1, name: "محمد علی حسینی", nationalId: "۰۰۱۲۳۴۵۶۷۸", position: "توسعه‌دهنده فرانت‌اند", startDate: "۱۴۰۴/۰۹/۱۲", status: "فعال" },
+                    { id: 2, name: "فاطمه رضایی", nationalId: "۰۰۲۷۶۵۴۳۲۱", position: "کارشناس مالی", startDate: "۱۴۰۴/۰۹/۲۰", status: "فعال" },
+                    { id: 3, name: "امیرحسین کریمی", nationalId: "۰۰۳۴۵۶۷۸۹۰", position: "مدیر پروژه", startDate: "۱۴۰۴/۱۰/۰۱", status: "فعال" },
+                    { id: 4, name: "زهرا موسوی", nationalId: "۰۰۴۸۷۶۵۴۳۲", position: "طراح کاربری UI/UX", startDate: "۱۴۰۴/۱۰/۰۵", status: "در حال بررسی" }
+                ];
+                saveRecentHires();
+            }
+            renderRecentHiresTable();
+        }
+
+        function saveRecentHires() {
+            localStorage.setItem('atiye_recent_hires', JSON.stringify(recentHires));
+        }
+
+        function renderRecentHiresTable(filteredData = null) {
+            const tbody = document.getElementById('recent-hires-tbody');
+            if (!tbody) return;
+            
+            const data = filteredData || recentHires;
+            tbody.innerHTML = '';
+            
+            if (data.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td colspan="5" class="py-8 text-center text-zinc-500 text-sm">هیچ موردی یافت نشد.</td>
+                `;
+                tbody.appendChild(row);
+                return;
+            }
+            
+            data.forEach(emp => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-zinc-800/40 transition-colors';
+                
+                const statusColor = emp.status === 'فعال' ? 'emerald' : 'amber';
+                
+                row.innerHTML = `
+                    <td class="py-4 pr-6 font-medium text-white">${emp.name}</td>
+                    <td class="py-4 text-zinc-400 font-mono text-xs">${emp.nationalId}</td>
+                    <td class="py-4 text-zinc-300">${emp.position}</td>
+                    <td class="py-4 text-zinc-400 font-mono text-xs">${emp.startDate}</td>
+                    <td class="py-4 pl-6">
+                        <span class="inline-block px-3 py-px text-xs font-medium rounded-2xl bg-${statusColor}-500/10 text-${statusColor}-400">
+                            ${emp.status}
+                        </span>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function filterRecentHires() {
+            const searchTerm = document.getElementById('global-search').value.toLowerCase().trim();
+            if (!searchTerm) {
+                renderRecentHiresTable();
+                return;
+            }
+            
+            const filtered = recentHires.filter(emp => 
+                emp.name.toLowerCase().includes(searchTerm) ||
+                emp.position.toLowerCase().includes(searchTerm) ||
+                emp.nationalId.includes(searchTerm)
+            );
+            
+            renderRecentHiresTable(filtered);
+        }
+
+        // ========== ADD NEW EMPLOYEE ==========
+        function showAddEmployeeModal() {
+            const modal = document.getElementById('add-employee-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            // Focus first input
+            setTimeout(() => {
+                const nameInput = document.getElementById('emp-name');
+                if (nameInput) nameInput.focus();
+                if (nameInput) nameInput.select();
+            }, 150);
+        }
+
+        function closeAddModal() {
+            const modal = document.getElementById('add-employee-modal');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+
+        function addNewEmployee() {
+            const name = document.getElementById('emp-name').value.trim();
+            const nationalId = document.getElementById('emp-national-id').value.trim();
+            const position = document.getElementById('emp-position').value.trim();
+            const department = document.getElementById('emp-department').value;
+            const startDate = document.getElementById('emp-start-date').value.trim();
+            
+            if (!name || !nationalId || !position || !startDate) {
+                showToast('خطا', 'لطفاً تمام فیلدهای الزامی را پر کنید.');
+                return;
+            }
+            
+            // Create new employee
+            const newEmp = {
+                id: Date.now(),
+                name: name,
+                nationalId: nationalId,
+                position: position,
+                startDate: startDate,
+                status: "فعال"
+            };
+            
+            recentHires.unshift(newEmp); // Add to top
+            saveRecentHires();
+            renderRecentHiresTable();
+            
+            closeAddModal();
+            
+            // Success toast
+            showToast('موفق', `کارمند "${name}" با موفقیت ثبت شد و به لیست استخدام‌های اخیر اضافه گردید.`);
+            
+            // Clear form for next use
+            setTimeout(() => {
+                document.getElementById('emp-name').value = '';
+                document.getElementById('emp-national-id').value = '';
+                document.getElementById('emp-position').value = '';
+                document.getElementById('emp-start-date').value = '';
+            }, 600);
+        }
+
+        // Quick action demo
+        function quickActionRecruit() {
+            showToast('جذب نیرو', 'فرم ثبت درخواست استخدام جدید در مرحله بعدی منو (جذب و استخدام) تکمیل خواهد شد.');
+        }
+
+        // ========== INITIALIZATION ==========
+        function initializeApp() {
+            initTailwind();
+            
+            // Start live datetime
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+            
+            // Load persisted data + render table
+            loadRecentHires();
+            
+            // Make global search clearable on ESC
+            const searchInput = document.getElementById('global-search');
+            if (searchInput) {
+                searchInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        this.value = '';
+                        renderRecentHiresTable();
+                    }
+                });
+            }
+            
+            // Keyboard shortcut hint (optional)
+            console.log('%c[آتیه] پنل HR آماده است. از کلیدهای میانبر در نسخه‌های بعدی پشتیبانی خواهد شد.', 'color:#52525b');
+            
+            // Welcome toast on first load (only once per session)
+            if (!sessionStorage.getItem('atiye_welcomed')) {
+                setTimeout(() => {
+                    // showToast('خوش آمدید', 'پنل آتیه آماده استفاده است. منو و داشبورد اولیه تکمیل شد.');
+                    sessionStorage.setItem('atiye_welcomed', 'true');
+                }, 1200);
+            }
+            
+            // Set initial active menu item
+            const firstMenuItem = document.querySelector('#sidebar-menu .menu-item');
+            if (firstMenuItem) {
+                firstMenuItem.classList.add('active', 'nav-active', 'bg-zinc-800', 'text-white');
+            }
+            
+            // Demo: show one toast after load for better UX (comment if not wanted)
+            // setTimeout(() => {
+            //     showToast('نکته', 'تاریخ و ساعت کاملاً شمسی است و هر ثانیه به‌روز می‌شود.');
+            // }, 4500);
+        }
+
+        // Boot the application
+        window.onload = initializeApp;
+    </script>
+</body>
+</html>
